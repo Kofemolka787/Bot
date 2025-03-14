@@ -1,9 +1,11 @@
+import os
 import telebot
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 import time
 import threading
+from flask import Flask, request
 
-TOKEN = "7906839757:AAFN4ll3FATz9pl1LVxZJKO-GdxLDX0GXyc"  # Токен вашего бота
+TOKEN = os.getenv('TOKEN', "7906839757:AAFN4ll3FATz9pl1LVxZJKO-GdxLDX0GXyc")  # Токен вашего бота
 CHANNEL_USERNAME = "@CrazyMines777"  # Канал для подписки
 PROMOCODE = "CrazyMines"  # Промокод
 DEPOSIT_LINK = "https://1wcneg.com/casino/list?open=register&sub1=832597017&p=gtyb"  # Ссылка для депозита
@@ -11,6 +13,7 @@ SUPPORT_USERNAME = "@B1ake7"  # Ваш Telegram-ник для поддержки
 MENU_IMAGE_PATH = "menu.jpg"  # Путь к изображению меню
 
 bot = telebot.TeleBot(TOKEN)
+app = Flask(__name__)
 
 # Словарь для отслеживания, было ли отправлено сообщение пользователю
 user_notifications = {}
@@ -38,70 +41,6 @@ TEXTS = {
         "choose_language": "Choose language",
         "support": "Help / Support",
         "language_selected": "🌐 Selected language: English",
-    },
-    "हिंदी": {
-        "main_menu": "🏠 Menu utama:",
-        "get_signal": "Mendapatkan sinyal",
-        "instruction": "Petunjuk",
-        "choose_language": "Pilih bahasa",
-        "support": "Bantuan / Dukungan",
-        "language_selected": "🌐 Bahasa yang dipilih: Indonesia",
-    },
-    "br": {
-        "main_menu": "🏠 Menu principal:",
-        "get_signal": "Obter sinal",
-        "instruction": "Instrução",
-        "choose_language": "Escolha o idioma",
-        "support": "Ajuda / Suporte",
-        "language_selected": "🌐 Idioma selecionado: Brazilian",
-    },
-    "es": {
-        "main_menu": "🏠 Menú principal:",
-        "get_signal": "Obtener señal",
-        "instruction": "Instrucciones",
-        "choose_language": "Elegir idioma",
-        "support": "Ayuda",
-        "language_selected": "🌐 Idioma seleccionado: Español",
-    },
-    "oz": {
-        "main_menu": "🏠 Asosiy menyu:",
-        "get_signal": "Signal oling",
-        "instruction": "Ko'rsatma",
-        "choose_language": "Tilni tanlang",
-        "support": "Yordam / Yordam",
-        "language_selected": "🌐 Tanlangan til: Ozarbayjon",
-    },
-    "az": {
-        "main_menu": "🏠 Əsas menyu:",
-        "get_signal": "Siqnal al",
-        "instruction": "Təlimat",
-        "choose_language": "Dil seç",
-        "support": "Yardım / Dəstək",
-        "language_selected": "🌐 Seçilmiş dil: Azərbaycan",
-    },
-    "tu": {
-        "main_menu": "🏠 Ana menü:",
-        "get_signal": "Sinyal al",
-        "instruction": "Talimat",
-        "choose_language": "Dil seçin",
-        "support": "Yardım / Destek",
-        "language_selected": "🌐 Seçilen dil: Türkçe",
-    },
-    "ar": {
-        "main_menu": "🏠 القائمة الرئيسية:",
-        "get_signal": "الحصول على الإشارة",
-        "instruction": "تعليمات",
-        "choose_language": "اختر اللغة",
-        "support": "المساعدة / الدعم",
-        "language_selected": "🌐 اللغة المختارة: عربي",
-    },
-    "po": {
-        "main_menu": "🏠 Menu principal:",
-        "get_signal": "Obter sinal",
-        "instruction": "Instrução",
-        "choose_language": "Escolha o idioma",
-        "support": "Ajuda / Suporte",
-        "language_selected": "🌐 Idioma selecionado: Português",
     },
 }
 
@@ -247,5 +186,19 @@ def support(call):
 def return_to_main_menu(call):
     send_main_menu(call.message.chat.id)
 
+# Обработчик вебхука
+@app.route('/webhook', methods=['POST'])
+def webhook():
+    update = telebot.types.Update.de_json(request.stream.read().decode('utf-8'))
+    bot.process_new_updates([update])
+    return "ok", 200
+
+# Запуск Flask-приложения
 if __name__ == '__main__':
-    bot.polling(none_stop=True)
+    # Установите вебхук
+    bot.remove_webhook()
+    bot.set_webhook(url="https://ваш-сервис.onrender.com/webhook")
+    
+    # Запуск Flask-приложения
+    app.run(host='0.0.0.0', port=10000)
+    
